@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}{{org.title}} | {% endblock %}
+
+
+{%block content%}
+    <div id="orgapp">
+        <h1 class="title">{{ org.title}}</h1>
+        <h2 class="subtitle">Based in {{org.country_hq.name}} ({{org.country_hq.code}})</h2>
+     
+        <!--
+        {% if org.locations and org.country_hq not in org.locations %}
+            <h2 class="subtitle">
+                Also present in
+                {% for location in org.locations %}
+                {{location.code}}
+                {% endfor %}
+            </h2>
+        {% endif %}
+        -->
+
+        {% if org.description %}
+            <p>{{org.description}}</p>
+        {% endif %}
+
+        <button @click="addToFavorites({{ org.id }})">Add to favorites</button>
+    </div>    
+{%endblock%}
+
+{% block scripts %}
+<script>
+    var orgapp = new Vue({
+        el: '#orgapp',
+        delimeters: ['[[', ']]'],
+        data () {
+            return{
+    }
+    },
+        mounted(){
+            console.log('Mounted');
+        },
+        methods: {
+            addToFavorites(org_id) {
+                console.log('Org_id:', org_id);
+
+                var data = {'org_id': org_id}
+
+                fetch('/api/add_to_favorites/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken':'{{ csrf_token }}'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(data)
+                })
+                .then((response) => {
+                    console.log(response)
+                })
+                .catch(function (error) {
+                    console.log('Error 2');
+                    console.log(error);
+                })
+            }
+        }
+    });
+</script>
+{% endblock %}

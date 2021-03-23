@@ -1,0 +1,189 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ThreeJS Test | {% endblock %}
+
+{% block content %}
+<h1 class="title">Visualizing Neuroprosthetics</h1>
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r126/three.min.js"
+   integrity="sha512-n8IpKWzDnBOcBhRlHirMZOUvEq2bLRMuJGjuVqbzUJwtTsgwOgK5aS0c1JA647XWYfqvXve8k3PtZdzpipFjgg=="
+   crossorigin="anonymous"></script>
+<!--
+   script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.6.0/gsap.min.js" integrity="sha512-1dalHDkG9EtcOmCnoCjiwQ/HEB5SDNqw8d4G2MKoNwjiwMNeBAkudsBCmSlMnXdsH8Bm0mOd3tl/6nL5y0bMaQ==" crossorigin="anonymous"></script>
+   -->
+<script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/RGBELoader.js"></script>
+<script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+
+   var scene = new THREE.Scene();
+   var camera = new THREE.PerspectiveCamera(4, window.innerWidth / window.innerHeight, 0.1, 1000);
+   var brain;
+   var brain_areas;
+   var theta = 0;
+   var INTERSECTED;
+   var raycaster;
+   var renderer;
+   var loader;
+   const mouse = new THREE.Vector2();
+   const radius = 100;
+
+   init();
+   animate();
+
+   async function init() {
+      renderer = new THREE.WebGLRenderer({ alpha: true });
+      renderer.outputEncoding = THREE.sRGBEncoding;
+
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement); 
+      
+      
+      //adding light
+      const light = new THREE.PointLight(0xF7D0FD, 2, 200);
+      light.position.set(50, 50, 50);
+      scene.add(light);
+
+      //figuring out whether some part of the brain has been clicked on
+      raycaster = new THREE.Raycaster();
+      document.addEventListener( 'mousemove', onDocumentMouseMove );
+
+      //resize and recentre the brain to fit window (responsive design) from https://subscription.packtpub.com/book/web_development/9781784392215/1/ch01lvl1sec15/automatically-resize-the-output-when-browser-size-changes
+      window.addEventListener('resize', onResize, false);  
+      
+      //loading the brain mesh + material ( async with a promise so that the animation is only applied when the model is loaded and so no undefined errors are thrown (code from https://discourse.threejs.org/t/most-simple-way-to-wait-loading-in-gltf-loader/13896/5))
+      loader = new THREE.GLTFLoader();
+      
+      const gltfData = await modelLoader("{% static 'content/3d/brain_org_Models_E0112A093/Brain_convertedInBlenderToGLTF_withMaterial.glb' %}");
+      brain = gltfData.scene;
+      scene.add(brain);
+      //renderer.render( scene, camera );
+      
+
+      /* the traditional way to load stuff
+      loader.load(
+         "{% static 'content/3d/brain_org_Models_E0112A093/Brain_convertedInBlenderToGLTF_withMaterial.glb' %}",
+         function (gltf) {
+            brain = gltf.scene;
+            scene.add(brain);
+            //renderer.render( scene, camera );
+         },
+         function (xhr) {
+            console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+         },
+         function (error) {
+            console.error(error);
+         }
+      );
+      */
+
+     
+   
+
+   }
+
+   function onResize() {
+         camera.aspect = window.innerWidth / window.innerHeight;
+         camera.updateProjectionMatrix();
+         renderer.setSize(window.innerWidth, window.innerHeight);
+   }
+
+   function onDocumentMouseMove(event) {
+
+      event.preventDefault();
+
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+      
+
+   }
+
+
+   function animate() {
+      requestAnimationFrame(animate);
+
+      render();
+
+      //brain.rotation.x += 0.01;
+      brain.rotation.y += 0.01;
+      //brain.rotation.z += 0.01;
+
+
+
+   }
+
+
+   function render() {
+      theta += 0.1;
+      camera.updateMatrixWorld();
+
+/*
+      // find intersections where mouse hovers over a brain area (code from https://github.com/mrdoob/three.js/blob/master/examples/webgl_interactive_cubes.html)    
+      raycaster.setFromCamera( mouse, camera );
+      const intersects = raycaster.intersectObjects( scene.children );
+      if (intersects.length > 0) {
+         if (INTERSECTED != intersects[0].object) {
+
+            if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+
+            INTERSECTED = intersects[0].object;
+            INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+            INTERSECTED.material.emissive.setHex(0xff0000);
+
+         }
+
+      } else {
+
+         if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+
+         INTERSECTED = null;
+
+      }
+*/
+      raycaster.setFromCamera( mouse, camera );
+      const intersects = raycaster.intersectObjects( scene.children );
+      //INTERSECTED = intersects[1].object;
+      //INTERSECTED = scene.children[1].object;
+		//INTERSECTED.material.emissive.setHex( 0xff0000 );
+
+      camera.position.z = 4;
+      camera.position.y = -0.06;
+      //camera.position = brain.position;
+      //camera.lookAt( scene.position );
+
+      renderer.render(scene, camera);
+   }
+
+
+   // this utility function allows you to use any three.js loader with promises and async/await
+   function modelLoader(url) {
+      return new Promise((resolve, reject) => {
+         loader.load(
+            url,
+            data => resolve(data),
+            function (xhr) {
+               console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+            },
+            function (error) {
+               console.error(error);
+            }
+         );
+      });
+   }
+
+   
+
+   init().catch(error => {
+      console.error(error);
+   });
+
+
+</script>
+
+{% endblock %}
