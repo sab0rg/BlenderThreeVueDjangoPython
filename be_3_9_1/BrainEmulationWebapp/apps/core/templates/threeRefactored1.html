@@ -1,0 +1,71 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ThreeJS Test | {% endblock %}
+
+{% block content %}
+<head>
+    <title>Bootstrap Example</title>
+    <meta charset="utf-8">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r126/three.min.js" integrity="sha512-n8IpKWzDnBOcBhRlHirMZOUvEq2bLRMuJGjuVqbzUJwtTsgwOgK5aS0c1JA647XWYfqvXve8k3PtZdzpipFjgg==" crossorigin="anonymous"></script>
+    <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/RGBELoader.js"></script>
+    <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="{% static 'styles/windows-95-ui-kit/node_modules/bootstrap/dist/css/bootstrap.min.css' %}" />
+    <script src="{% static 'styles/windows-95-ui-kit/node_modules/bootstrap/dist/js/bootstrap.min.js' %}"></script>
+
+
+    <link rel="stylesheet" type="text/css" href="{% static 'styles/windows-95-ui-kit/css/pixel.css' %}" />
+    <script type="text/javascript" src="{% static 'styles/windows-95-ui-kit/js/pixel.js' %}"></script>
+</head>
+<body>  
+  <div class="row">
+    {% for org in orgs %}
+
+      <div class="col-xs-12 col-sm-4 col-md-3 col-lg-3">
+        <div class="card">
+            <div class="card-header">
+              {{org.title}} ({{org.category}})
+            </div>
+              {% if org.category.slug == "startup" %}
+                <div class="card-body" style="background: #E9C9F2">
+              {% endif %}
+              
+              {% if org.category.slug == "lab" %}
+                <div class="card-body" style="background: #9980F2">
+              {% endif %}
+
+              {% if org.category.slug == "foundation" %}
+                <div class="card-body" style="background: #8DA6F2">
+              {% endif %}
+
+              {% if org.category.slug == "incubator" or org.category.slug == "accelerator"  %}
+                <div class="card-body" style="background: #29DEF2">
+              {% endif %}
+
+              {% if org.category.slug == "venture_capital" or org.category.slug == "investment_fund"  %}
+                <div class="card-body" style="background: #79F2BA">
+              {% endif %}
+                  <p class="card-text">{{org.description}}</p>
+                  <div class="d-flex justify-content-end mt-3">
+                    <a href="{% url 'org_profile' org.category.slug org.slug %}" class="btn btn-sm mr-2 btn-primary border-dark" type="button">
+                      Details
+                    </a>                    
+                  </div>
+                </div>
+        </div>
+      </div> 
+
+    {% endfor %}
+
+  </div>
+
+</body>
+</html>
+
+
+
+{% endblock %}

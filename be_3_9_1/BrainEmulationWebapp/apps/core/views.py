@@ -21,4 +21,19 @@ def about(request):
 	return render(request, 'about.html')
 
 def three(request):
-	return render(request, 'three.html')
+	orgs = Org.objects.all()
+
+	context = {
+		'orgs': orgs
+		}
+
+	return render(request, 'three.html', context)
+
+def threeRefactored1(request):
+	orgs = Org.objects.all()
+
+	context = {
+		'orgs': orgs
+		}
+
+	return render(request, 'threeRefactored1.html', context)

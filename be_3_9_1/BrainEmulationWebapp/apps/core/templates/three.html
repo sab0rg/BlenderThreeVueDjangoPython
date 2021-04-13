@@ -4,43 +4,117 @@
 {% block title %}ThreeJS Test | {% endblock %}
 
 {% block content %}
-<h1 class="title">Visualizing Neuroprosthetics</h1>
+<!--<div id="tip" style="position: absolute; display: none">Some text</div> -->
 
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r126/three.min.js"
-   integrity="sha512-n8IpKWzDnBOcBhRlHirMZOUvEq2bLRMuJGjuVqbzUJwtTsgwOgK5aS0c1JA647XWYfqvXve8k3PtZdzpipFjgg=="
-   crossorigin="anonymous"></script>
-<!--
-   script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.6.0/gsap.min.js" integrity="sha512-1dalHDkG9EtcOmCnoCjiwQ/HEB5SDNqw8d4G2MKoNwjiwMNeBAkudsBCmSlMnXdsH8Bm0mOd3tl/6nL5y0bMaQ==" crossorigin="anonymous"></script>
-   -->
+<div class="container-fluid" id="tip" style="display: none">
+   <div class="row">
+      
+      {% for org in orgs %}
+      <div class="col-xs-12 col-sm-4 col-md-3 col-lg-3">
+         <div class="card card-tertiary">
+            <div class="card-header">
+              {{org.title}} ({{org.category}})
+            </div>
+              {% if org.category.slug == "startup" %}
+                <div class="card-body" style="background: #E9C9F2">
+              {% endif %}
+              
+              {% if org.category.slug == "lab" %}
+                <div class="card-body" style="background: #9980F2">
+              {% endif %}
+
+              {% if org.category.slug == "foundation" %}
+                <div class="card-body" style="background: #8DA6F2">
+              {% endif %}
+
+              {% if org.category.slug == "incubator" or org.category.slug == "accelerator"  %}
+                <div class="card-body" style="background: #29DEF2">
+              {% endif %}
+
+              {% if org.category.slug == "venture_capital" or org.category.slug == "investment_fund"  %}
+                <div class="card-body" style="background: #79F2BA">
+              {% endif %}
+
+                  <p class="card-text">{{org.description}}</p>
+                  <div class="d-flex justify-content-end mt-3">
+                    <a href="{% url 'org_profile' org.category.slug org.slug %}" class="btn btn-sm mr-2 btn-primary border-dark" type="button">
+                      Details
+                    </a>                    
+                  </div>
+                </div>
+        </div>
+      </div> 
+    {% endfor %}
+
+   </div>
+</div>   
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r126/three.min.js" integrity="sha512-n8IpKWzDnBOcBhRlHirMZOUvEq2bLRMuJGjuVqbzUJwtTsgwOgK5aS0c1JA647XWYfqvXve8k3PtZdzpipFjgg==" crossorigin="anonymous"></script>
 <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/RGBELoader.js"></script>
 <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/controls/OrbitControls.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+<link rel="stylesheet" type="text/css" href="{% static 'styles/windows-95-ui-kit/node_modules/bootstrap/dist/css/bootstrap.min.css' %}" />
+<script src="{% static 'styles/windows-95-ui-kit/node_modules/bootstrap/dist/js/bootstrap.min.js' %}"></script>
+
+
+<link rel="stylesheet" type="text/css" href="{% static 'styles/windows-95-ui-kit/css/pixel.css' %}" />
+<script type="text/javascript" src="{% static 'styles/windows-95-ui-kit/js/pixel.js' %}"></script>
+
+
+
+<!-- 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+<link rel="stylesheet" type="text/css" href="{% static 'styles/windows-95-ui-kit/css/pixel.css' %}" />
+<script src="{% static 'styles/windows-95-ui-kit/js/pixel.js' %}" type="text/javascript"></script>
+
+-->
+
+
+
+
+
+
 
 <script>
 
-   var scene = new THREE.Scene();
-   var camera = new THREE.PerspectiveCamera(4, window.innerWidth / window.innerHeight, 0.1, 1000);
+   var scene; 
+   var camera;
+
+   var NEUROPROSTHETICS_CANVAS;
+   var canvasBounds; 
    var brain;
-   var brain_areas;
-   var theta = 0;
+   var selectedBrainAreaName;
+   var selectedBrainAreaObject;
+   var selectedBrainAreaClickPosition;
+   var techTexture;
+   var techMaterial;
+
    var INTERSECTED;
    var raycaster;
-   var renderer;
    var loader;
    const mouse = new THREE.Vector2();
-   const radius = 100;
 
    init();
    animate();
 
    async function init() {
-      renderer = new THREE.WebGLRenderer({ alpha: true });
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(4, window.innerWidth / (window.innerHeight/1.5), 1, 1000);
+      renderer = new THREE.WebGLRenderer({alpha:true});
+      renderer.domElement.id = 'NEUROPROSTHETICS_CANVAS';
+
+
       renderer.outputEncoding = THREE.sRGBEncoding;
 
-      renderer.setPixelRatio( window.devicePixelRatio );
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      //renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize(window.innerWidth, window.innerHeight/1.5);
       document.body.appendChild(renderer.domElement); 
       
       
@@ -49,7 +123,7 @@
       light.position.set(50, 50, 50);
       scene.add(light);
 
-      //figuring out whether some part of the brain has been clicked on
+      //figuring out whether some part of the brain has been clicked on        
       raycaster = new THREE.Raycaster();
       document.addEventListener( 'mousemove', onDocumentMouseMove );
 
@@ -59,11 +133,16 @@
       //loading the brain mesh + material ( async with a promise so that the animation is only applied when the model is loaded and so no undefined errors are thrown (code from https://discourse.threejs.org/t/most-simple-way-to-wait-loading-in-gltf-loader/13896/5))
       loader = new THREE.GLTFLoader();
       
-      const gltfData = await modelLoader("{% static 'content/3d/brain_org_Models_E0112A093/Brain_convertedInBlenderToGLTF_withMaterial.glb' %}");
+      const gltfData = await modelLoader("{% static 'content/3d/brain_org_Models_E0112A093/Brain_convertedInBlenderToGLTF_withMaterial2.glb' %}");
       brain = gltfData.scene;
       scene.add(brain);
       //renderer.render( scene, camera );
       
+      //loading texture for later brain area selection (when user selects a brain area this texture will be applied to it, implying that the area has been computerized)
+      techTexture = new THREE.TextureLoader().load(
+         "{% static 'content/3d/tech_brain/greenMotherBoard2.png' %}"
+      );
+      techMaterial = new THREE.MeshBasicMaterial({map:techTexture});
 
       /* the traditional way to load stuff
       loader.load(
@@ -82,25 +161,64 @@
       );
       */
 
-     
    
 
    }
 
    function onResize() {
-         camera.aspect = window.innerWidth / window.innerHeight;
-         camera.updateProjectionMatrix();
-         renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / (window.innerHeight/1.5);
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, (window.innerHeight/1.5));
+      
+      //updating the #tip div's location when the window is resized. For more info on this div see method onBrainAreaClicked
+      $('#tip').css({ left: 0, top: ($('#NEUROPROSTHETICS_CANVAS').offset().top + $('#NEUROPROSTHETICS_CANVAS').outerHeight(true))});
+
    }
 
-   function onDocumentMouseMove(event) {
+   function onBrainAreaClicked(brainAreaName){
+      // texture from  <a href='https://pngtree.com/free-backgrounds'>free background photos from pngtree.com</a>
+      var wireframe = new THREE.MeshBasicMaterial({
+         color: 0x00000,
+         wireframe: true,
+         transparent: false,
+         opacity: 1.0      
+      });
+      
+      //if its the same brain area as previously selected do nothing
+      if(brainAreaName != selectedBrainAreaName){
+         selectedBrainAreaName = brainAreaName;
+         selectedBrainAreaObject = brain.getObjectByName(selectedBrainAreaName);
+         //selectedBrainAreaObject.scale.multiplyScalar(1.1);
+         console.log("i clicked on: " + selectedBrainAreaObject.name);
+         //selectedBrainAreaObject.material = techMaterial;
+         //brain.children = false;
+         //selectedBrainAreaObject.material.visible = false;
+         
+         //changing the #tip element to show the info related to the selected part of the brain. The code is partially based on https://stackoverflow.com/questions/54410532/how-to-correctly-position-html-elements-in-three-js-coordinate-system
+         $('#tip').css('display', 'block');
+         //targetting the sub-element of the div id:#tip by using a jquery selector syntax explained here https://stackoverflow.com/questions/6665246/nested-id-in-jquery-selector
+         $('#tip .ml-4').text(selectedBrainAreaObject.name);
+         
+         //calculating the Y position to place the text at as the sum of canvas hight + its offset from top of the page. The code is based on https://stackoverflow.com/questions/20827030/calculate-bottom-left-corner-of-a-div
+         $('#tip').css({ left: 0, top: ($('#NEUROPROSTHETICS_CANVAS').offset().top + $('#NEUROPROSTHETICS_CANVAS').outerHeight(true))});
+         //organizing the HTML so that the #tip content appears on the same level as and after #NEUROPROSTHETICS_CANVAS. Using this jquery method for that https://api.jquery.com/insertafter/
+         $( '#tip' ).insertAfter( "#NEUROPROSTHETICS_CANVAS" );
+      }
+   }
 
+   
+   
+
+   function onDocumentMouseMove(event) {
+      
       event.preventDefault();
 
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
-
-      
+      //responsive mouse location for selecting brain areas (when changing window size/devices or when canvas is not full screen) based on https://stackoverflow.com/questions/36880033/clicking-objects-in-three-js-when-the-canvas-is-not-full-screen-r74
+      //[why done this way] need to getElementById each time as ThreeJS generates a canvas for the objects used after they are loaded
+      NEUROPROSTHETICS_CANVAS = document.getElementById("NEUROPROSTHETICS_CANVAS");
+      canvasBounds = NEUROPROSTHETICS_CANVAS.getBoundingClientRect();
+      mouse.x = ( ( event.clientX - canvasBounds.left ) / ( canvasBounds.right - canvasBounds.left ) ) * 2 - 1;
+      mouse.y = - ( ( event.clientY - canvasBounds.top ) / ( canvasBounds.bottom - canvasBounds.top) ) * 2 + 1;
 
    }
 
@@ -120,41 +238,40 @@
 
 
    function render() {
-      theta += 0.1;
       camera.updateMatrixWorld();
 
-/*
+
       // find intersections where mouse hovers over a brain area (code from https://github.com/mrdoob/three.js/blob/master/examples/webgl_interactive_cubes.html)    
-      raycaster.setFromCamera( mouse, camera );
-      const intersects = raycaster.intersectObjects( scene.children );
-      if (intersects.length > 0) {
-         if (INTERSECTED != intersects[0].object) {
+		raycaster.setFromCamera( mouse, camera );
+		const intersects = raycaster.intersectObjects( brain.children );
+		
+      if ( intersects.length > 0 ) {
+         if ( INTERSECTED != intersects[ 0 ].object ) {
+            if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
 
-            if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-
-            INTERSECTED = intersects[0].object;
+            INTERSECTED = intersects[ 0 ].object;
             INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-            INTERSECTED.material.emissive.setHex(0xff0000);
+            INTERSECTED.material.emissive.setHex( 0xff0000 );
 
+            NEUROPROSTHETICS_CANVAS.addEventListener('click', function(){
+               if(INTERSECTED){
+                  onBrainAreaClicked (INTERSECTED.name);
+               }
+               }
+            );    
          }
+		} else {
+			if ( INTERSECTED ){
+            INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );   
+         }
+          
+			INTERSECTED = null;
+		}
 
-      } else {
 
-         if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
 
-         INTERSECTED = null;
-
-      }
-*/
-      raycaster.setFromCamera( mouse, camera );
-      const intersects = raycaster.intersectObjects( scene.children );
-      //INTERSECTED = intersects[1].object;
-      //INTERSECTED = scene.children[1].object;
-		//INTERSECTED.material.emissive.setHex( 0xff0000 );
-
-      camera.position.z = 4;
-      camera.position.y = -0.06;
-      //camera.position = brain.position;
+      camera.position.z = 2.5;
+      //camera.position.y = -0.06;
       //camera.lookAt( scene.position );
 
       renderer.render(scene, camera);
@@ -185,5 +302,8 @@
 
 
 </script>
+
+
+
 
 {% endblock %}
