@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
 	'django_countries',
     'multiselectfield',
+    'taggit',
 
 	'apps.favorites',
 	'apps.core',

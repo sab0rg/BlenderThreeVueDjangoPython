@@ -1,6 +1,7 @@
 from django.db import models
 from django_countries.fields import CountryField
 from multiselectfield import MultiSelectField
+from taggit.managers import TaggableManager
 
 
 class Category(models.Model):
@@ -44,6 +45,8 @@ class Org(models.Model):
         max_choices=len(BRAIN_AREAS),
 		default="n/a"
     )
+	#based on the django library https://dev.to/coderasha/how-to-add-tags-to-your-models-in-django-django-packages-series-1-3704 it is well maintained and created by django core devs
+	tags = TaggableManager();
 
 
 	website = models.CharField(blank = True, null = True, max_length=255)

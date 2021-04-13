@@ -9,6 +9,8 @@
 
 
 <div class="container-fluid" id="tip" style="display: none">
+<h3 id="intro_statement">some text</h3>
+
    <div class="row">
       
       {% for org in orgs %}
@@ -196,8 +198,8 @@
          
          //changing the #tip element to show the info related to the selected part of the brain. The code is partially based on https://stackoverflow.com/questions/54410532/how-to-correctly-position-html-elements-in-three-js-coordinate-system
          $('#tip').css('display', 'block');
-         //targetting the sub-element of the div id:#tip by using a jquery selector syntax explained here https://stackoverflow.com/questions/6665246/nested-id-in-jquery-selector
-         $('#tip .ml-4').text(selectedBrainAreaObject.name);
+         //(inactive) targetting the sub-element of the div id:#tip by using a jquery selector syntax explained here https://stackoverflow.com/questions/6665246/nested-id-in-jquery-selector
+         $('#intro_statement').text("Orgs building "+selectedBrainAreaObject.name+" neurotech, ordered by team size:");
          
          //calculating the Y position to place the text at as the sum of canvas hight + its offset from top of the page. The code is based on https://stackoverflow.com/questions/20827030/calculate-bottom-left-corner-of-a-div
          $('#tip').css({ left: 0, top: ($('#NEUROPROSTHETICS_CANVAS').offset().top + $('#NEUROPROSTHETICS_CANVAS').outerHeight(true))});
