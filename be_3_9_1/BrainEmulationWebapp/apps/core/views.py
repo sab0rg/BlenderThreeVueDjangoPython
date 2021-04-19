@@ -21,10 +21,11 @@ def about(request):
 	return render(request, 'about.html')
 
 def three(request):
+
 	orgs = Org.objects.all()
 
 	context = {
-		'orgs': orgs
+		'orgs': orgs,
 		}
 
 	return render(request, 'three.html', context)
