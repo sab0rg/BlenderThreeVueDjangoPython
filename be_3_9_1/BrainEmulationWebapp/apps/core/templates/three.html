@@ -4,15 +4,10 @@
 {% block title %}ThreeJS Test | {% endblock %}
 
 {% block content %}
-<!--<div id="tip" style="position: absolute; display: none">Some text</div> -->
-
-
-
+      
 <div class="container-fluid" id="tip" style="display: none">
 <h3 id="intro_statement">some text</h3>
-
    <div class="row">
-      
       {% for org in orgs %}
       <div class="col-xs-12 col-sm-4 col-md-3 col-lg-3">
          <div class="card card-tertiary">
@@ -96,6 +91,7 @@
    var selectedBrainAreaObject;
    var selectedBrainAreaObject_humanReadibleName;    //retrieved later from the sql tables via django
    var selectedBrainAreaClickPosition;
+   var previouslySelectedBrainArea;
   
 
    var techTexture;
@@ -203,7 +199,6 @@
          $('#tip').css('display', 'block');
          //(inactive) targetting the sub-element of the div id:#tip by using a jquery selector syntax explained here https://stackoverflow.com/questions/6665246/nested-id-in-jquery-selector
          //matching the brain area name (set in blender for the GLTF child objects) with django model. The GLTF name is a slug of the brain area in django model so it will be used to retrieve full name of the brain part
-         
          {% for brainRegion in brainRegions %}
             if(selectedBrainAreaObject.name == '{{brainRegion.slug}}')
             selectedBrainAreaObject_humanReadibleName = '{{brainRegion.name}}'
@@ -258,6 +253,7 @@
 		raycaster.setFromCamera( mouse, camera );
 		const intersects = raycaster.intersectObjects( brain.children );
 		
+
       if ( intersects.length > 0 ) {
          if ( INTERSECTED != intersects[ 0 ].object ) {
             if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
@@ -267,17 +263,23 @@
             INTERSECTED.material.emissive.setHex( 0xff0000 );
 
             NEUROPROSTHETICS_CANVAS.addEventListener('click', function(){
+               //only firing the event if the brain was clickled. I.e. not when clicked inside the canvas but outside the brain
                if(INTERSECTED){
+                  //if any brain area was clicked, then when the next area is clicked the old one should return to original color/texture
+                  if(previouslySelectedBrainArea) previouslySelectedBrainArea.material.emissive.setHex( INTERSECTED.currentHex );
+                  INTERSECTED.material.emissive.setHex( 0x0000FF )
+                  
                   onBrainAreaClicked (INTERSECTED.name);
+
+                  previouslySelectedBrainArea = INTERSECTED;
+                  INTERSECTED = null;
                }
                }
             );    
          }
 		} else {
-			if ( INTERSECTED ){
-            INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );   
-         }
-          
+			if ( INTERSECTED )   INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );   
+               
 			INTERSECTED = null;
 		}
 
