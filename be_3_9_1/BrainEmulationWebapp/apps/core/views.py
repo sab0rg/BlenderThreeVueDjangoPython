@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from apps.orgs.models import Org
+from apps.orgs.models import Org, Org_BrainRegion, BrainRegion
 
 
 def frontpage(request):
@@ -22,10 +22,17 @@ def about(request):
 
 def three(request):
 
+	#passing orgs from SQL with Django(python) into the html template
 	orgs = Org.objects.all()
+	#passing brain regions from SQL with Django(python) into the html template
+	brainRegions = BrainRegion.objects.all()
+	#passing a mapping between which orgs work on which brain region
+	orgBrainRegions = Org_BrainRegion.objects.all()
 
 	context = {
 		'orgs': orgs,
+		'brainRegions' : brainRegions,
+		'orgBrainRegions' : orgBrainRegions,
 		}
 
 	return render(request, 'three.html', context)
