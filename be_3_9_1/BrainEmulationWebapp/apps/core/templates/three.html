@@ -212,14 +212,17 @@
             if(selectedBrainAreaObject.name == '{{brainRegion.slug}}')
             selectedBrainAreaObject_humanReadibleName = '{{brainRegion.name}}'
          {% endfor %}
-         $('#intro_statement').text("Orgs building "+selectedBrainAreaObject_humanReadibleName +" neurotech:");
+         $('#intro_statement').text("Orgs building "+selectedBrainAreaObject_humanReadibleName +" neurotech:"); //Here I am simply putting the brain region name (in a readable format) below the 3d canvas
 
+         //Reviewing if the orgs work on the selected brain area, and only if they do I shell display them in the html
          {% for org in orgs %}
+            //simple reset. If an org has been displayed, this statement will make it invisible again when clicking on a brain region
             $('#{{org.slug}}').css("display", "none");
             {% for org_BR in orgBrainRegions %}
+               //if the name of the org (in the current iteration of the for loop) exists inside the table which associates a brain region to an org, then continue...
                if('{{org.title}}' == '{{org_BR.org_name.title}}'){
+                  //if the org is associated with (works on) the selected brain region, display it
                   if('{{org_BR.brain_region_name.name}}' == selectedBrainAreaObject_humanReadibleName){
-                     //$('#{{org.slug}}').show();
                      $('#{{org.slug}}').css("display", "block");
                   }
                }
