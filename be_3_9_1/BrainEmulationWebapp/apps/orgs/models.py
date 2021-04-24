@@ -79,7 +79,7 @@ class Org_BrainRegion(models.Model):
     
 	org_name= models.ForeignKey(Org, on_delete=models.CASCADE)
 	brain_region_name= models.ForeignKey(BrainRegion, on_delete=models.CASCADE)
-	
+
 	def __str__(self):
 		return (self.org_name.title + self.brain_region_name.name)
 	class Meta:
