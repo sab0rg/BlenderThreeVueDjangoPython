@@ -1,0 +1,7 @@
+card background:
+f9d1fb
+
+card selected header color:
+c6c7ff
+
+alternatively: d3a5fb
