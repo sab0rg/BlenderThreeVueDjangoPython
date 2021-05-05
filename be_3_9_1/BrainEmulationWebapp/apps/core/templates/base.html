@@ -1,53 +1,64 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}{% endblock %}Brain Emulation</title>
+        <!--
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
+        -->
         
         <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r126/three.min.js" integrity="sha512-n8IpKWzDnBOcBhRlHirMZOUvEq2bLRMuJGjuVqbzUJwtTsgwOgK5aS0c1JA647XWYfqvXve8k3PtZdzpipFjgg==" crossorigin="anonymous"></script>
+        <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js"></script>
+        <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/RGBELoader.js"></script>
+        <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/controls/OrbitControls.js"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
+        <link rel="stylesheet" type="text/css" href="{% static 'styles/windows-95-ui-kit/node_modules/bootstrap/dist/css/bootstrap.min.css' %}" />
+        <script src="{% static 'styles/windows-95-ui-kit/node_modules/bootstrap/dist/js/bootstrap.min.js' %}"></script>
+
+
+        <link rel="stylesheet" type="text/css" href="{% static 'styles/windows-95-ui-kit/css/pixel.css' %}" />
+        <script type="text/javascript" src="{% static 'styles/windows-95-ui-kit/js/pixel.js' %}"></script>
 
     </head>
     <body>
-        <nav class="navbar is-dark">
-            <div class="navbar-brand">
-                <a class="navbar-item" href="{% url 'frontpage'%}">navigation</a>
-
-                <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="main-navbar">
-                    <span aria-hidden="true"></span>
-                    <span aria-hidden="true"></span>
-                    <span aria-hidden="true"></span>
-                </a>
-            </div>      
-            <div id="main-navbar" class="navbar-menu">
-                <div class="navbar-end">
-                    {% for category in menu_categories %}
-                        <a href="{% url 'category_detail' category.slug %}" class="navbar-item">{{ category.title }}</a>
-                    {% endfor %}
-                    <div class="navbar-item">
-                        <a href="{% url 'favorites' %}" class="button is-primary">Favorites</a>
-                    </div>
-                </div>
-            </div>
-        </nav>
-
+    <!--
+        {% for category in menu_categories %}
+            <a href="{% url 'category_detail' category.slug %}" class="navbar-item">{{ category.title }}</a>
+        {% endfor %}
+        <div class="navbar-item">
+            <a href="{% url 'favorites' %}" class="button is-primary">Favorites</a>
+        </div>
+    -->
+        
         {% block content %}
         {% endblock %}
 
-        <footer class="footer">
-            <div class="columns">
-                <div class="column is-4">
-                    <h2 class="subtitle">Brain Emulation Alliance</h2>
+        <div style="height:80px;">
+            <nav class="navbar navbar-main navbar-expand-lg navbar-dark justify-content-between">
+                <ul class="navbar-nav navbar-nav-hover flex-row align-items-center">
+                    <li class="nav-item">
+                        <a href="{% url 'frontpage'%}" class="nav-link" role="button">
+                            <span class="nav-link-inner-text">Neurotech World</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'contact'%}" class="nav-link" role="button">
+                            <span
+                                class="nav-link-inner-text">Get Seed Funding</span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="time text-center">
+                    <span class="time text-uppercase">1:47 PM</span>
                 </div>
-
-                <div class="column is-8">
-                    <a href="{% url 'contact' %}" class="navbar-item">Contact</a>
-                    <a href="{% url 'about' %}" class="navbar-item">About</a>
-                </div>
-            </div>
-        </footer>
+            </nav>
+        </div>
+      
            
         {% block scripts %}
         {% endblock %}

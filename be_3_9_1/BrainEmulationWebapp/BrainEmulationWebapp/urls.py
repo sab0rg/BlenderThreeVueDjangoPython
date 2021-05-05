@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from apps.core.views import frontpage, contact, about, three, threeRefactored1
+from apps.core.views import frontpage, contact, about, dashboard, threeRefactored1
 from apps.orgs.views import org_profile, category_detail
 from apps.favorites.views import favorites
 
@@ -33,7 +33,7 @@ urlpatterns = [
 	path('about/', about, name='about'),
 	path('favorites/', favorites, name='favorites'),
 
-	path('three/', three, name='three'),
+	path('dashboard/', dashboard, name='dashboard'),
 	path('three/1', threeRefactored1, name='threeRefactored1'),
 
 

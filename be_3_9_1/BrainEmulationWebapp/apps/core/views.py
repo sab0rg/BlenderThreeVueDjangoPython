@@ -2,7 +2,7 @@ from django.shortcuts import render
 from apps.orgs.models import Org, Org_BrainRegion, BrainRegion
 
 
-def frontpage(request):
+def dashboard(request):
 	orgs = Org.objects.all()
 	
 	#Gets only the orgs which have the value is_featured set to true
@@ -12,7 +12,7 @@ def frontpage(request):
 		'orgs': orgs
 		}
 		
-	return render(request, 'frontpage.html', context)
+	return render(request, 'dashboard.html', context)
 
 def contact(request):
 	return render(request, 'contact.html')
@@ -20,7 +20,7 @@ def contact(request):
 def about(request):
 	return render(request, 'about.html')
 
-def three(request):
+def frontpage(request):
 
 	#passing orgs from SQL with Django(python) into the html template
 	orgs = Org.objects.all()
@@ -35,7 +35,7 @@ def three(request):
 		'orgBrainRegions' : orgBrainRegions,
 		}
 
-	return render(request, 'three.html', context)
+	return render(request, 'frontpage.html', context)
 
 def threeRefactored1(request):
 	orgs = Org.objects.all()
