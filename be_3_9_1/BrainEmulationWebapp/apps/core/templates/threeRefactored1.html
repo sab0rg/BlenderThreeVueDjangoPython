@@ -4,65 +4,128 @@
 {% block title %}ThreeJS Test | {% endblock %}
 
 {% block content %}
-<head>
-    <title>Bootstrap Example</title>
-    <meta charset="utf-8">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r126/three.min.js" integrity="sha512-n8IpKWzDnBOcBhRlHirMZOUvEq2bLRMuJGjuVqbzUJwtTsgwOgK5aS0c1JA647XWYfqvXve8k3PtZdzpipFjgg==" crossorigin="anonymous"></script>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/RGBELoader.js"></script>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="{% static 'styles/windows-95-ui-kit/node_modules/bootstrap/dist/css/bootstrap.min.css' %}" />
-    <script src="{% static 'styles/windows-95-ui-kit/node_modules/bootstrap/dist/js/bootstrap.min.js' %}"></script>
-
-
-    <link rel="stylesheet" type="text/css" href="{% static 'styles/windows-95-ui-kit/css/pixel.css' %}" />
-    <script type="text/javascript" src="{% static 'styles/windows-95-ui-kit/js/pixel.js' %}"></script>
-</head>
 <body>  
-  <div class="row">
-    {% for org in orgs %}
+  <script>
+      // SCENE
+      const scene = new THREE.Scene();
 
-      <div class="col-xs-12 col-sm-4 col-md-3 col-lg-3">
-        <div class="card">
-            <div class="card-header">
-              {{org.title}} ({{org.category}})
-            </div>
-              {% if org.category.slug == "startup" %}
-                <div class="card-body" style="background: #E9C9F2">
-              {% endif %}
-              
-              {% if org.category.slug == "lab" %}
-                <div class="card-body" style="background: #9980F2">
-              {% endif %}
+      // CAMERA
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-              {% if org.category.slug == "foundation" %}
-                <div class="card-body" style="background: #8DA6F2">
-              {% endif %}
+      // RENDERER
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
 
-              {% if org.category.slug == "incubator" or org.category.slug == "accelerator"  %}
-                <div class="card-body" style="background: #29DEF2">
-              {% endif %}
+      // CONTROLS
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      
+      controls.enableDamping = true;
+      controls.update();
+      
+      // INIT CAMERA
+      camera.position.z = 15;
+      camera.position.x = 3;
+      camera.position.y = 6;
+      camera.lookAt(0, 0, -20)
 
-              {% if org.category.slug == "venture_capital" or org.category.slug == "investment_fund"  %}
-                <div class="card-body" style="background: #79F2BA">
-              {% endif %}
-                  <p class="card-text">{{org.description}}</p>
-                  <div class="d-flex justify-content-end mt-3">
-                    <a href="{% url 'org_profile' org.category.slug org.slug %}" class="btn btn-sm mr-2 btn-primary border-dark" type="button">
-                      Details
-                    </a>                    
-                  </div>
-                </div>
-        </div>
-      </div> 
+      // INIT HEMISPHERE LIGHT
+      scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
-    {% endfor %}
+      // SCENE
+      scene.background = new THREE.Color(0xffffff);
+      const textureLoader = new THREE.TextureLoader();
 
-  </div>
+      const colorMap = textureLoader.load('{% static 'content/3d/textures_materials/color_map_JS-2-2021-05-07-12-27-26-Seamless.png' %}');
+      const normalMap = textureLoader.load('{% static 'content/3d/textures_materials/normal_map_JS-2-2021-05-07-12-27-26-Seamless-Normal.png' %}');
+      const heightMap = textureLoader.load('{% static 'content/3d/textures_materials/height_map_JS-2-2021-05-07-12-27-26-Seamless.png' %}');
 
+
+
+
+
+
+      // FLOOR
+      for (var i = -50; i <= 50; i += 5) {
+          for (var j = -50; j <= 50; j += 5) {
+              const plane = new THREE.Mesh(new THREE.PlaneGeometry(5, 5, 1), new THREE.MeshPhongMaterial({ color: 0x0a7d15}));
+              plane.position.x = i;
+              plane.position.z = j;
+              plane.rotation.x = - Math.PI / 2
+              scene.add(plane);
+          }
+      }
+
+      const plane1 = new THREE.Mesh(new THREE.PlaneGeometry(2, 2),
+        new THREE.MeshStandardMaterial(
+          {
+            map: colorMap
+          }))
+      
+      plane1.position.y = 3;
+      plane1.position.x = -4;
+      scene.add(plane1);
+
+      const plane2 = new THREE.Mesh(new THREE.PlaneGeometry(2, 2),
+        new THREE.MeshStandardMaterial(
+          {
+            map: colorMap,
+            normalMap: normalMap
+          }))
+      
+      plane2.position.y = 3;
+      plane2.position.x = -1.5;
+      scene.add(plane2);
+
+      const plane3 = new THREE.Mesh(new THREE.PlaneGeometry(2, 2, 2048, 2048),
+        new THREE.MeshStandardMaterial(
+          {
+            map: colorMap,
+            normalMap: normalMap,
+            displacementMap: heightMap,
+            displacementScale: 0.05,
+           
+          }))
+      
+      plane3.position.y = 3;
+      plane3.position.x = 1;
+      scene.add(plane3);
+
+      
+      const cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 128, {
+          format: THREE.RGBFormat,
+          generateMipmaps: true,
+          minFilter: THREE.LinearMipmapLinearFilter,
+          encoding: THREE.sRGBEncoding
+      } );
+
+      const cubeCamera = new THREE.CubeCamera( 1, 10000, cubeRenderTarget );
+
+
+      // DIRECTIONAL LIGHT
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.x += 20
+      directionalLight.position.y += 20
+      directionalLight.position.z += 20
+      scene.add(directionalLight);
+
+      // ANIMATE
+      function animate() {
+          const time = Date.now() * 0.0005;
+          directionalLight.position.x =  Math.sin(time * 0.7) * 20;
+          directionalLight.position.z = Math.abs( Math.cos(time * 0.7) ) * 20;
+
+          controls.update();
+
+          cubeCamera.update( renderer, scene );
+
+          renderer.render(scene, camera);
+          requestAnimationFrame(animate);
+      }
+      document.body.appendChild(renderer.domElement);
+      animate();
+  
+  </script>
 </body>
 </html>
 

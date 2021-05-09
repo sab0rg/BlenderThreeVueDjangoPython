@@ -41,3 +41,44 @@
     
     s.hosovsky@gmail.com
 {% endblock %}
+
+
+ {% comment %} if ( intersects.length > 0 ) {
+         if ( INTERSECTED != intersects[ 0 ].object ) {
+            if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+
+            INTERSECTED = intersects[ 0 ].object;
+            INTERSECTED.material = INTERSECTED.material.clone(); //must clone the material into a new instance otherwise (since 1 material is shared across all brain regions) it would change the surface of all brain regions. Code inspired by https://discourse.threejs.org/t/manipulate-child-mesh-material-without-affecting-parent-object/20440/3
+            INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+            INTERSECTED.material.emissive.setHex( 0xf9d1fb );
+
+            NEUROPROSTHETICS_CANVAS.addEventListener('click', function(){
+               //only firing the event if the brain was clickled. I.e. not when clicked inside the canvas but outside the brain
+               if(INTERSECTED){
+                  //if any brain area was clicked, then when the next area is clicked the old one should return to original color/texture
+                  if(previouslySelectedBrainArea){
+                     previouslySelectedBrainArea.material.emissive.setHex( INTERSECTED.currentHex );
+                  }
+                  INTERSECTED.material.emissive.setHex( 0x0000FF );
+                  
+                  onBrainAreaClicked (INTERSECTED.name);
+
+                  previouslySelectedBrainArea = INTERSECTED;
+                  INTERSECTED = null;
+               }
+               /* logic for clicking on peripheral nervous system !!not going to work due to the if this is in. The click won't be registered if not intersected!!
+               if(!INTERSECTED){
+                  if(previouslySelectedBrainArea) previouslySelectedBrainArea.material.emissive.setHex( INTERSECTED.currentHex );
+                  previouslySelectedBrainArea = null;
+                  onBrainAreaClicked("peripheral_NS");
+
+               }
+               */
+               }
+            );    
+         }
+		} else {
+			if ( INTERSECTED )   INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );   
+               
+			INTERSECTED = null;
+		} {% endcomment %}

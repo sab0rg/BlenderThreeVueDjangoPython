@@ -112,6 +112,8 @@
 
    var scene; 
    var camera;
+   let light1, light2, light3, light4;
+
 
    var NEUROPROSTHETICS_CANVAS;
    var canvasBounds; 
@@ -123,7 +125,12 @@
    var previouslySelectedBrainArea;
   
 
-   var techTexture;
+   var colorMap_bio;
+   var colorMap_tech;
+   var normalMap;
+   var heightMap;
+
+   var bioMaterial;
    var techMaterial;
 
    var INTERSECTED;
@@ -145,7 +152,7 @@
 
       renderer = new THREE.WebGLRenderer({alpha:true});
       controls = new THREE.OrbitControls(camera, renderer.domElement);
-      controls.enableZoom = false;
+      //controls.enableZoom = false;
       controls.update();
 
 
@@ -158,26 +165,55 @@
       document.body.appendChild(renderer.domElement); 
       
       
-      //adding light
-      const light = new THREE.PointLight(0xf9d1fb, 1, 300);
-      light.position.set(50, 50, 50);
-      scene.add(light);
+      //adding light. Code is inspired by https://github.com/mrdoob/three.js/blob/master/examples/webgl_lights_pointlights.html
+		const sphere = new THREE.SphereGeometry( 0.0015, 16, 8 );
+      const clock = new THREE.Clock();
 
-      //figuring out whether some part of the brain has been clicked on        
+      light1 = new THREE.PointLight( 0xff0040, 2, 50 );
+      light1.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff0040 } ) ) );
+      scene.add( light1 );
+
+      light2 = new THREE.PointLight( 0x0040ff, 2, 50 );
+      light2.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x0040ff } ) ) );
+      scene.add( light2 );
+
+      light3 = new THREE.PointLight( 0xffaa00, 2, 50 );
+      light3.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffaa00 } ) ) );
+      scene.add( light3 );
+
+
+   //figuring out whether some part of the brain has been clicked on        
       raycaster = new THREE.Raycaster();
       document.addEventListener( 'mousemove', onDocumentMouseMove );
       //NEUROPROSTHETICS_CANVAS.addEventListener('click', onCanvasClick);
 
-      //resize and recentre the brain to fit window (responsive design) from https://subscription.packtpub.com/book/web_development/9781784392215/1/ch01lvl1sec15/automatically-resize-the-output-when-browser-size-changes
+   //resize and recentre the brain to fit window (responsive design) from https://subscription.packtpub.com/book/web_development/9781784392215/1/ch01lvl1sec15/automatically-resize-the-output-when-browser-size-changes
       window.addEventListener('resize', onResize, false);  
       
-      //loading the brain mesh + material ( async with a promise so that the animation is only applied when the model is loaded and so no undefined errors are thrown (code from https://discourse.threejs.org/t/most-simple-way-to-wait-loading-in-gltf-loader/13896/5))
+   //loading texture for later brain area selection (when user selects a brain area this texture will be applied to it, implying that the area has been computerized)
+      const textureLoader = new THREE.TextureLoader();
+   //textures & maps
+      colorMap_bio = textureLoader.load("{% static 'content/3d/textures_materials/bio_brain/brain_colorTexture.png' %}");
+      colorMap_tech = textureLoader.load("{% static 'content/3d/textures_materials/color_map_JS-2-2021-05-07-12-27-26-Seamless.png' %}");
+      //normalMap = textureLoader.load("{% static 'content/3d/textures_materials/normal_map_JS-2-2021-05-07-12-27-26-Seamless-Normal.png' %}");
+      //heightMap = textureLoader.load("{% static 'content/3d/textures_materials/height_map_JS-2-2021-05-07-12-27-26-Seamless.png' %}");
+   //assigning them to materials
+      bioMaterial = new THREE.MeshStandardMaterial ({map:colorMap_bio});
+      //techMaterial = new THREE.MeshStandardMaterial({map: colorMap_tech});  
+
+   //loading the brain mesh + tech material ( async with a promise so that the animation is only applied when the model is loaded and so no undefined errors are thrown (code from https://discourse.threejs.org/t/most-simple-way-to-wait-loading-in-gltf-loader/13896/5))
       loader = new THREE.GLTFLoader();
       loader.load(
-         "{% static 'content/3d/brain_org_Models_E0112A093/Brain_convertedInBlenderToGLTF_withMaterial3.glb' %}",
+         "{% static 'content/3d/brain_org_Models_E0112A093/tech_brain_w_material.glb' %}",
          function (gltf) {
             brain = gltf.scene;
             scene.add(brain);
+            
+            //setting the brain to have bio texture (to be changed into tech texture when clicked)
+         brain.traverse(function(obj){
+            if(obj.isMesh && obj.material)
+              obj.material.map = colorMap_bio;
+            });
             //animate();
          },
          function (xhr) {
@@ -188,16 +224,7 @@
          }
       );
 
-      //loading texture for later brain area selection (when user selects a brain area this texture will be applied to it, implying that the area has been computerized)
-      techTexture = new THREE.TextureLoader().load(
-         "{% static 'content/3d/tech_brain/greenMotherBoard2.png' %}"
-      );
-      techMaterial = new THREE.MeshStandardMaterial({map:techTexture});
-
       
-
-   
-
    }
 
    function onResize() {
@@ -231,13 +258,14 @@
    }
    
    function onBrainAreaClicked(brainAreaName){
-      // texture from  <a href='https://pngtree.com/free-backgrounds'>free background photos from pngtree.com</a>
+      /* texture from  <a href='https://pngtree.com/free-backgrounds'>free background photos from pngtree.com</a>
       var wireframe = new THREE.MeshBasicMaterial({
          color: 0x00000,
          wireframe: true,
          transparent: false,
          opacity: 1.0      
       });
+      */
       
       //if its the same brain area as previously selected do nothing
       if(brainAreaName != selectedBrainAreaName){
@@ -245,8 +273,6 @@
          selectedBrainAreaObject = brain.getObjectByName(selectedBrainAreaName);
          //selectedBrainAreaObject.scale.multiplyScalar(1.1);
          console.log("i clicked on: " + selectedBrainAreaObject.name);
-         //selectedBrainAreaObject.material = techMaterial;
-         //selectedBrainAreaObject.material.visible = false;
          
          renderOrgInfo();
 
@@ -308,7 +334,7 @@
       render();
 
       //brain.rotation.x += 0.01;
-      brain.rotation.y += 0.01;
+      //brain.rotation.y += 0.01;
       //brain.rotation.z += 0.01;
 
 
@@ -319,9 +345,8 @@
    function render() {
       camera.updateMatrixWorld();
      	controls.update();
-
-
-
+      
+      
       // find intersections where mouse hovers over a brain area (code from https://github.com/mrdoob/three.js/blob/master/examples/webgl_interactive_cubes.html)    
 		raycaster.setFromCamera( mouse, camera );
 		const intersects = raycaster.intersectObjects( brain.children );
@@ -332,29 +357,58 @@
             if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
 
             INTERSECTED = intersects[ 0 ].object;
+            INTERSECTED.material = INTERSECTED.material.clone(); //must clone the material into a new instance otherwise (since 1 material is shared across all brain regions) it would change the surface of all brain regions. Code inspired by https://discourse.threejs.org/t/manipulate-child-mesh-material-without-affecting-parent-object/20440/3
             INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-            INTERSECTED.material.emissive.setHex( 0xff0000 );
+            INTERSECTED.material.emissive.setHex( 0xf9d1fb );
+            
 
             NEUROPROSTHETICS_CANVAS.addEventListener('click', function(){
                //only firing the event if the brain was clickled. I.e. not when clicked inside the canvas but outside the brain
                if(INTERSECTED){
-                  //if any brain area was clicked, then when the next area is clicked the old one should return to original color/texture
-                  if(previouslySelectedBrainArea) previouslySelectedBrainArea.material.emissive.setHex( INTERSECTED.currentHex );
-                  INTERSECTED.material.emissive.setHex( 0x0000FF )
-                  
+                  //if any brain area was already clicked, then when the next area is clicked the old one should return to original color/texture
+                  if(previouslySelectedBrainArea){
+                     previouslySelectedBrainArea.material.emissive.setHex( INTERSECTED.currentHex );
+                     previouslySelectedBrainArea.material.map = colorMap_bio;
+                  }
+                  //INTERSECTED.material.emissive.setHex( 0x0000FF );
+                  INTERSECTED.material.map = colorMap_tech;
+                  INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex ); //so that after clicking a brain part it will stop being highlighted
+
                   onBrainAreaClicked (INTERSECTED.name);
 
                   previouslySelectedBrainArea = INTERSECTED;
                   INTERSECTED = null;
                }
+               /* logic for clicking on peripheral nervous system !!not going to work due to the if this is in. The click won't be registered if not intersected!!
+               if(!INTERSECTED){
+                  if(previouslySelectedBrainArea) previouslySelectedBrainArea.material.emissive.setHex( INTERSECTED.currentHex );
+                  previouslySelectedBrainArea = null;
+                  onBrainAreaClicked("peripheral_NS");
+
+               }
+               */
                }
             );    
          }
 		} else {
-			if ( INTERSECTED )   INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );   
-               
+			if ( INTERSECTED )   INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );            
 			INTERSECTED = null;
 		}
+      
+      
+      const time = Date.now() * 0.0005;
+		
+      light1.position.x = Math.sin( time * 0.7 ) * 0.1;
+      light1.position.y = Math.cos( time * 0.5 ) * 0.1;
+      light1.position.z = Math.cos( time * 0.3 ) * 0.2;
+
+      light2.position.x = Math.cos( time * 0.3 ) * 0.2;
+      light2.position.y = Math.sin( time * 0.5 ) * 0.1;
+      light2.position.z = Math.sin( time * 0.7 ) * 0.1;
+
+      light3.position.x = Math.sin( time * 0.3 ) * 0.1;
+      light3.position.y = Math.cos( time * 0.7 ) * 0.2;
+      light3.position.z = Math.sin( time * 0.5 ) * 0.1;
 
       renderer.render(scene, camera);
    }
