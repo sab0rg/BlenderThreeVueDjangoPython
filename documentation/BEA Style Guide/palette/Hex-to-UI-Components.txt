@@ -1,7 +1,18 @@
+CARD
 card background:
 f9d1fb
 
 card selected header color:
 c6c7ff
+(alt. d3a5fb)
 
-alternatively: d3a5fb
+BUTTON
+
+[Brain Emulation]
+[Neuroprothesis]
+[Neurotechnology]
+[Brain-Computer Interface]
+
+the complemetarity of nature and technology
+the roughness of early tech (windows UI?) and gentleness of pastel colors (gradient? palette?)
+the aesthetics of 80s & 90s (vaporwave? neon?)

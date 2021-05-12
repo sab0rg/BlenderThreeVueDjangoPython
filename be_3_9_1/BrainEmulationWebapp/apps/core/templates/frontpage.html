@@ -112,7 +112,10 @@
 
    var scene; 
    var camera;
-   let light1, light2, light3, light4;
+   let light1, light2, light3;
+   const clock = new THREE.Clock();
+   var timeStamp;
+   var animTime;
 
 
    var NEUROPROSTHETICS_CANVAS;
@@ -129,6 +132,10 @@
    var colorMap_tech;
    var normalMap;
    var heightMap;
+
+   var magic_particle;
+   var particleGroup, particleAttributes;
+   var particlesOn;
 
    var bioMaterial;
    var techMaterial;
@@ -148,7 +155,7 @@
       camera.position.z = 2.5;
       //camera.position.y = -0.06;
       //camera.lookAt( scene.position );
-      scene.add(new THREE.AxesHelper(500));
+      //scene.add(new THREE.AxesHelper(500));
 
       renderer = new THREE.WebGLRenderer({alpha:true});
       controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -167,19 +174,25 @@
       
       //adding light. Code is inspired by https://github.com/mrdoob/three.js/blob/master/examples/webgl_lights_pointlights.html
 		const sphere = new THREE.SphereGeometry( 0.0015, 16, 8 );
-      const clock = new THREE.Clock();
 
-      light1 = new THREE.PointLight( 0xff0040, 2, 50 );
-      light1.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff0040 } ) ) );
+
+      //const test_light = new THREE.PointLight(0xffffff, 1, 300);
+      //test_light.position.set(50, 50, 50);
+      //scene.add(test_light);
+
+      //0x00ffff tirkisova
+      
+      light1 = new THREE.PointLight( 0xffaa00, 2, 50 );
+      light1.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffaa00 } ) ) );
       scene.add( light1 );
 
-      light2 = new THREE.PointLight( 0x0040ff, 2, 50 );
-      light2.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x0040ff } ) ) );
+      light2 = new THREE.PointLight( 0x9980F2, 2, 50 );
+      light2.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x9980F2 } ) ) );
       scene.add( light2 );
 
       light3 = new THREE.PointLight( 0xffaa00, 2, 50 );
       light3.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffaa00 } ) ) );
-      scene.add( light3 );
+      //scene.add( light3 );
 
 
    //figuring out whether some part of the brain has been clicked on        
@@ -194,12 +207,17 @@
       const textureLoader = new THREE.TextureLoader();
    //textures & maps
       colorMap_bio = textureLoader.load("{% static 'content/3d/textures_materials/bio_brain/brain_colorTexture.png' %}");
+      //heightMap_bio = textureLoader.load("{% static 'content/3d/textures_materials/bio_brain/brain2/Brain_Matter_001_DISP.png' %}");
+      magic_particle = THREE.ImageUtils.loadTexture( "{% static 'content/3d/textures_materials/magic/spark.png' %}" );
+
+      
       colorMap_tech = textureLoader.load("{% static 'content/3d/textures_materials/color_map_JS-2-2021-05-07-12-27-26-Seamless.png' %}");
-      //normalMap = textureLoader.load("{% static 'content/3d/textures_materials/normal_map_JS-2-2021-05-07-12-27-26-Seamless-Normal.png' %}");
-      //heightMap = textureLoader.load("{% static 'content/3d/textures_materials/height_map_JS-2-2021-05-07-12-27-26-Seamless.png' %}");
+      //normalMap_tech = textureLoader.load("{% static 'content/3d/textures_materials/normal_map_JS-2-2021-05-07-12-27-26-Seamless-Normal.png' %}");
+      heightMap_tech = textureLoader.load("{% static 'content/3d/textures_materials/height_map_JS-2-2021-05-07-12-27-26-Seamless.png' %}");
    //assigning them to materials
       bioMaterial = new THREE.MeshStandardMaterial ({map:colorMap_bio});
       //techMaterial = new THREE.MeshStandardMaterial({map: colorMap_tech});  
+
 
    //loading the brain mesh + tech material ( async with a promise so that the animation is only applied when the model is loaded and so no undefined errors are thrown (code from https://discourse.threejs.org/t/most-simple-way-to-wait-loading-in-gltf-loader/13896/5))
       loader = new THREE.GLTFLoader();
@@ -208,21 +226,24 @@
          function (gltf) {
             brain = gltf.scene;
             scene.add(brain);
-            
+  
             //setting the brain to have bio texture (to be changed into tech texture when clicked)
-         brain.traverse(function(obj){
-            if(obj.isMesh && obj.material)
-              obj.material.map = colorMap_bio;
+            brain.traverse(function(obj){
+               if(obj.isMesh && obj.material){
+                  obj.material.map = colorMap_bio;
+           
+               }
             });
-            //animate();
          },
          function (xhr) {
+            
             console.log((xhr.loaded / xhr.total * 100) + '% loaded');
          },
          function (error) {
             console.error(error);
          }
       );
+   
 
       
    }
@@ -274,12 +295,16 @@
          //selectedBrainAreaObject.scale.multiplyScalar(1.1);
          console.log("i clicked on: " + selectedBrainAreaObject.name);
          
+         //initiating the particle animation after clicking a brain region. The IF ensures the particles won't show up again if the previous particle animation has not finished.
+         if(!scene.getObjectByName('particleGroup')){
+            magicTransition();
+            timeStamp = clock.getElapsedTime();
+         }
          renderOrgInfo();
 
       }
    }
 
-   
    function renderOrgInfo(){
          //calculating the Y position to place the text at as the sum of canvas hight + its offset from top of the page. The code is based on https://stackoverflow.com/questions/20827030/calculate-bottom-left-corner-of-a-div
          $('#tip').css({ left: 0, top: ($('#NEUROPROSTHETICS_CANVAS').offset().top + $('#NEUROPROSTHETICS_CANVAS').outerHeight(true))});      
@@ -327,20 +352,87 @@
 
    }
 
-
    function animate() {
       requestAnimationFrame(animate);
-
       render();
+      animTime = clock.getElapsedTime();
 
+
+
+      //animating brain
       //brain.rotation.x += 0.01;
-      //brain.rotation.y += 0.01;
+      brain.rotation.y += 0.01;
       //brain.rotation.z += 0.01;
+   
+      //animating particles
 
 
+        if((animTime - timeStamp) < 1.57){
+            for ( var c = 0; c < particleGroup.children.length; c ++ ){
+               var sprite = particleGroup.children[ c ];
 
+               // particle wiggle
+               //var wiggleScale = 0.00005;
+               //sprite.position.x += wiggleScale * (Math.random() - 0.005);
+               //sprite.position.y += wiggleScale * (Math.random() - 0.005);
+               //sprite.position.z += wiggleScale * (Math.random() - 0.005);
+               
+               // pulse away/towards center
+               // individual rates of movement
+               var a = particleAttributes.randomness[c] + 1;
+               var pulseFactor = Math.sin(a * animTime) * 0.1 + 0.8;
+               sprite.position.x = particleAttributes.startPosition[c].x * pulseFactor;
+               sprite.position.y = particleAttributes.startPosition[c].y * pulseFactor;
+               sprite.position.z = particleAttributes.startPosition[c].z * pulseFactor;
+
+               //sprite.material.opacity = 0.5;	
+
+               if((animTime - timeStamp) < 0.78){
+                  sprite.material.opacity = Math.sin(animTime - timeStamp);
+               }
+               if((animTime - timeStamp) > 0.78){
+                  sprite.material.opacity = Math.cos(animTime - timeStamp);
+               }
+            }
+
+            // rotate the entire group
+            // particleGroup.rotation.x = animTime * 2;
+            particleGroup.rotation.y = animTime * 2;
+            // particleGroup.rotation.z = animTime * 4; 
+
+            var target = new THREE.Vector3(); // create once an reuse it
+            scene.getObjectByName(selectedBrainAreaName).getWorldPosition(target);
+            particleGroup.position = (0,0,0);    
+            particleGroup.position.x = target.x;    
+            particleGroup.position.y = target.y;    
+            particleGroup.position.z = target.z;   
+
+            particleGroup.opacity 
+         
+         }
+         else{
+            particlesOn = false;
+            scene.remove(particleGroup);
+         
+      }
+
+      //animating lights
+      	
+      light1.position.x = Math.sin( animTime * 0.4 ) * 0.1;
+      light1.position.y = Math.cos( animTime * 0.3 ) * 0.1;
+      light1.position.z = Math.cos( animTime * 0.2 ) * 0.2;
+
+      light2.position.x = Math.cos( animTime * 0.2 ) * 0.2;
+      light2.position.y = Math.sin( animTime * 0.3 ) * 0.1;
+      light2.position.z = Math.sin( animTime * 0.4 ) * 0.1;
+
+      light3.position.x = Math.sin( animTime * 0.2 ) * 0.1;
+      light3.position.y = Math.cos( animTime * 0.4 ) * 0.2;
+      light3.position.z = Math.sin( animTime * 0.3 ) * 0.1;
+      
+      controls.update();
+      
    }
-
 
    function render() {
       camera.updateMatrixWorld();
@@ -368,10 +460,20 @@
                   //if any brain area was already clicked, then when the next area is clicked the old one should return to original color/texture
                   if(previouslySelectedBrainArea){
                      previouslySelectedBrainArea.material.emissive.setHex( INTERSECTED.currentHex );
-                     previouslySelectedBrainArea.material.map = colorMap_bio;
+                     
+
+                     previouslySelectedBrainArea.material.map = colorMap_bio;                 
+                     previouslySelectedBrainArea.material.bumpMap = null;
+                     previouslySelectedBrainArea.material.needsUpdate = true;
+
+
                   }
                   //INTERSECTED.material.emissive.setHex( 0x0000FF );
+                  
+                  INTERSECTED.material.bumpMap = heightMap_tech;
+                  INTERSECTED.material.bumpScale = 0.002;
                   INTERSECTED.material.map = colorMap_tech;
+               
                   INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex ); //so that after clicking a brain part it will stop being highlighted
 
                   onBrainAreaClicked (INTERSECTED.name);
@@ -391,29 +493,20 @@
             );    
          }
 		} else {
-			if ( INTERSECTED )   INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );            
+			if ( INTERSECTED ){
+            INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );            
+            
+         }
 			INTERSECTED = null;
 		}
       
       
-      const time = Date.now() * 0.0005;
-		
-      light1.position.x = Math.sin( time * 0.7 ) * 0.1;
-      light1.position.y = Math.cos( time * 0.5 ) * 0.1;
-      light1.position.z = Math.cos( time * 0.3 ) * 0.2;
-
-      light2.position.x = Math.cos( time * 0.3 ) * 0.2;
-      light2.position.y = Math.sin( time * 0.5 ) * 0.1;
-      light2.position.z = Math.sin( time * 0.7 ) * 0.1;
-
-      light3.position.x = Math.sin( time * 0.3 ) * 0.1;
-      light3.position.y = Math.cos( time * 0.7 ) * 0.2;
-      light3.position.z = Math.sin( time * 0.5 ) * 0.1;
-
+      
+      
       renderer.render(scene, camera);
    }
 
-   
+   /*
    // this utility function allows you to use any three.js loader with promises and async/await
    function modelLoader(url) {
       return new Promise((resolve, reject) => {
@@ -429,8 +522,54 @@
          );
       });
    }
+   */
 
+   //code insipired by https://github.com/stemkoski/stemkoski.github.com/blob/master/Three.js/Particles.html
+   function magicTransition(){
+           
+      particlesOn = true;
+
+      particleGroup = new THREE.Object3D();
+	   particleAttributes = { startSize: [], startPosition: [], randomness: [] };   
+
+      var totalParticles = 500;
+	   var radiusRange = 0.07;
+      for( var i = 0; i < totalParticles; i++ ){
+         var spriteMaterial = new THREE.SpriteMaterial( { map: magic_particle, useScreenCoordinates: false, color: 0xffffff } );
+         
+         var sprite = new THREE.Sprite( spriteMaterial );
+         sprite.scale.set( 0.03, 0.03 ); // imageWidth, imageHeight
+         sprite.position.set( Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5 );
+         
+         // for a cube:
+         // sprite.position.multiplyScalar( radiusRange );
+         // for a solid sphere:
+         // sprite.position.setLength( radiusRange * Math.random() );
+         // for a spherical shell:
+         sprite.position.setLength( radiusRange * (Math.random() * 0.1 + 0.9) );
+         
+         // sprite.color.setRGB( Math.random(),  Math.random(),  Math.random() ); 
+         sprite.material.color.setHSL( Math.random(), 0.9, 0.7 ); 
+         
+         //sprite.opacity = 0.80; // translucent particles
+         sprite.material.blending = THREE.AdditiveBlending; // "glowing" particles
+         
+         particleGroup.add( sprite );
+         // add variable qualities to arrays, if they need to be accessed later
+         particleAttributes.startPosition.push( sprite.position.clone() );
+         particleAttributes.randomness.push( Math.random() );
+      }
+ 
+
+
+      particleGroup.name='particleGroup';
+      scene.add( particleGroup );
    
+   
+   }   
+      
+
+
 
    init().catch(error => {
       console.error(error);
