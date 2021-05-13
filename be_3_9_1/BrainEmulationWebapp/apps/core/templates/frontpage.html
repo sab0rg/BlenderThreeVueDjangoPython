@@ -112,7 +112,7 @@
 
    var scene; 
    var camera;
-   let light1, light2, light3;
+   let light1, light2, light3, light4;
    const clock = new THREE.Clock();
    var timeStamp;
    var animTime;
@@ -159,7 +159,9 @@
 
       renderer = new THREE.WebGLRenderer({alpha:true});
       controls = new THREE.OrbitControls(camera, renderer.domElement);
-      //controls.enableZoom = false;
+      controls.enableZoom = false;
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
       controls.update();
 
 
@@ -182,17 +184,23 @@
 
       //0x00ffff tirkisova
       
-      light1 = new THREE.PointLight( 0xffaa00, 2, 50 );
+      light1 = new THREE.PointLight( 0xffaa00, 1, 50 );
       light1.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffaa00 } ) ) );
+      //ligth1.mesh.material.blending = THREE.AdditiveBlending;
       scene.add( light1 );
 
-      light2 = new THREE.PointLight( 0x9980F2, 2, 50 );
+      light2 = new THREE.PointLight( 0x9980F2, 1, 50 );
       light2.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x9980F2 } ) ) );
       scene.add( light2 );
 
-      light3 = new THREE.PointLight( 0xffaa00, 2, 50 );
-      light3.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffaa00 } ) ) );
-      //scene.add( light3 );
+      light3 = new THREE.PointLight( 0xd5fbfe, 1, 50 );
+      light3.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xd5fbfe } ) ) );
+      scene.add( light3 );
+
+      light4 = new THREE.PointLight( 0x3a9c76, 1, 50 );
+      light4.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x3a9c76 } ) ) );
+      scene.add( light4 );
+
 
 
    //figuring out whether some part of the brain has been clicked on        
@@ -360,39 +368,31 @@
 
 
       //animating brain
-      //brain.rotation.x += 0.01;
-      brain.rotation.y += 0.01;
-      //brain.rotation.z += 0.01;
+      brain.rotation.x -= 0.0005;
+      brain.rotation.y -= 0.0008;
+      brain.rotation.z -= 0.0005;
    
       //animating particles
-
-
-        if((animTime - timeStamp) < 1.57){
+         if((animTime - timeStamp) < 1.57){
             for ( var c = 0; c < particleGroup.children.length; c ++ ){
                var sprite = particleGroup.children[ c ];
-
-               // particle wiggle
-               //var wiggleScale = 0.00005;
-               //sprite.position.x += wiggleScale * (Math.random() - 0.005);
-               //sprite.position.y += wiggleScale * (Math.random() - 0.005);
-               //sprite.position.z += wiggleScale * (Math.random() - 0.005);
                
-               // pulse away/towards center
-               // individual rates of movement
-               var a = particleAttributes.randomness[c] + 1;
-               var pulseFactor = Math.sin(a * animTime) * 0.1 + 0.8;
-               sprite.position.x = particleAttributes.startPosition[c].x * pulseFactor;
-               sprite.position.y = particleAttributes.startPosition[c].y * pulseFactor;
-               sprite.position.z = particleAttributes.startPosition[c].z * pulseFactor;
-
-               //sprite.material.opacity = 0.5;	
-
                if((animTime - timeStamp) < 0.78){
                   sprite.material.opacity = Math.sin(animTime - timeStamp);
                }
                if((animTime - timeStamp) > 0.78){
                   sprite.material.opacity = Math.cos(animTime - timeStamp);
                }
+
+               // pulse away/towards center
+               // individual rates of movement               
+               var a = particleAttributes.randomness[c] + 1;
+               var pulseFactor = Math.sin(a * animTime) * 0.1 + 0.8;
+               sprite.position.x = particleAttributes.startPosition[c].x * pulseFactor;
+               sprite.position.y = particleAttributes.startPosition[c].y * pulseFactor;
+               sprite.position.z = particleAttributes.startPosition[c].z * pulseFactor;
+
+
             }
 
             // rotate the entire group
@@ -407,8 +407,8 @@
             particleGroup.position.y = target.y;    
             particleGroup.position.z = target.z;   
 
-            particleGroup.opacity 
-         
+            scene.add( particleGroup );
+
          }
          else{
             particlesOn = false;
@@ -422,13 +422,17 @@
       light1.position.y = Math.cos( animTime * 0.3 ) * 0.1;
       light1.position.z = Math.cos( animTime * 0.2 ) * 0.2;
 
-      light2.position.x = Math.cos( animTime * 0.2 ) * 0.2;
-      light2.position.y = Math.sin( animTime * 0.3 ) * 0.1;
-      light2.position.z = Math.sin( animTime * 0.4 ) * 0.1;
+      light2.position.x = Math.cos( animTime * 0.3 ) * 0.2;
+      light2.position.y = Math.sin( animTime * 0.4 ) * -0.1;
+      light2.position.z = Math.sin( animTime * 0.4 ) * -0.1;
 
       light3.position.x = Math.sin( animTime * 0.2 ) * 0.1;
-      light3.position.y = Math.cos( animTime * 0.4 ) * 0.2;
+      light3.position.y = Math.cos( animTime * 0.3 ) * 0.2;
       light3.position.z = Math.sin( animTime * 0.3 ) * 0.1;
+
+      light4.position.x = Math.cos( animTime * 0.4 ) * -0.1;
+      light4.position.y = Math.sin( animTime * 0.2 ) * -0.1;
+      light4.position.z = Math.sin( animTime * 0.3 ) * -0.2;
       
       controls.update();
       
@@ -563,9 +567,7 @@
 
 
       particleGroup.name='particleGroup';
-      scene.add( particleGroup );
-   
-   
+         
    }   
       
 
