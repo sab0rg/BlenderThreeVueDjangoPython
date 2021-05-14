@@ -151,7 +151,7 @@
 
    async function init() {
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(4, window.innerWidth / (window.innerHeight/1.5), 1, 1000);
+      camera = new THREE.PerspectiveCamera(4, window.innerWidth / (window.innerHeight), 1, 1000);
       camera.position.z = 2.5;
       //camera.position.y = -0.06;
       //camera.lookAt( scene.position );
@@ -159,7 +159,7 @@
 
       renderer = new THREE.WebGLRenderer({alpha:true});
       controls = new THREE.OrbitControls(camera, renderer.domElement);
-      controls.enableZoom = false;
+      //controls.enableZoom = false;
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.update();
@@ -170,7 +170,7 @@
       renderer.outputEncoding = THREE.sRGBEncoding;
 
       //renderer.setPixelRatio( window.devicePixelRatio );
-      renderer.setSize(window.innerWidth, window.innerHeight/1.5);
+      renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement); 
       
       
@@ -219,9 +219,9 @@
       magic_particle = THREE.ImageUtils.loadTexture( "{% static 'content/3d/textures_materials/magic/spark.png' %}" );
 
       
-      colorMap_tech = textureLoader.load("{% static 'content/3d/textures_materials/color_map_JS-2-2021-05-07-12-27-26-Seamless.png' %}");
+      colorMap_tech = textureLoader.load("{% static 'content/3d/textures_materials/tech_brain/color_map_JS-2-2021-05-07-12-27-26-Seamless.png' %}");
       //normalMap_tech = textureLoader.load("{% static 'content/3d/textures_materials/normal_map_JS-2-2021-05-07-12-27-26-Seamless-Normal.png' %}");
-      heightMap_tech = textureLoader.load("{% static 'content/3d/textures_materials/height_map_JS-2-2021-05-07-12-27-26-Seamless.png' %}");
+      heightMap_tech = textureLoader.load("{% static 'content/3d/textures_materials/tech_brain/height_map_JS-2-2021-05-07-12-27-26-Seamless.png' %}");
    //assigning them to materials
       bioMaterial = new THREE.MeshStandardMaterial ({map:colorMap_bio});
       //techMaterial = new THREE.MeshStandardMaterial({map: colorMap_tech});  
@@ -258,11 +258,11 @@
 
    function onResize() {
 
-      camera.aspect = window.innerWidth / (window.innerHeight/1.5);
+      camera.aspect = window.innerWidth / (window.innerHeight);
       camera.updateProjectionMatrix();
       controls.update();
 
-      renderer.setSize(window.innerWidth, (window.innerHeight/1.5));
+      renderer.setSize(window.innerWidth, (window.innerHeight));
       
       //updating the #tip div's location when the window is resized. For more info on this div see method onBrainAreaClicked
       $('#tip').css({ left: 0, top: ($('#NEUROPROSTHETICS_CANVAS').offset().top + $('#NEUROPROSTHETICS_CANVAS').outerHeight(true))});
@@ -310,6 +310,27 @@
          }
          renderOrgInfo();
 
+         INTERSECTED.material.wireframe = true;
+         INTERSECTED.material.wireframeLinewidth = 5;
+         setTimeout(() => {
+            brain.traverse(function(obj){
+                  if(obj.isMesh && obj.material){
+                     obj.material.wireframe = false;
+                  }
+               });
+         },850);
+         
+         /*
+         gsap.to(INTERSECTED.scale, 0.85, {
+            x: (INTERSECTED.scale.x-0.0008),
+            y: (INTERSECTED.scale.y-0.0008),
+            z: (INTERSECTED.scale.z-0.0008
+            ),
+            yoyo: true,
+            repeat: 1,
+            }
+         );
+         */
       }
    }
 
@@ -378,10 +399,13 @@
                var sprite = particleGroup.children[ c ];
                
                if((animTime - timeStamp) < 0.78){
+                  //gsap.to(INTERSECTED.material, 1, {opacity:0, overwrite:true }); //in the first 0.78s after clicking a brain region, the region will turn completely white so that when the tech texture is applied over it the transition will be visually smooth
                   sprite.material.opacity = Math.sin(animTime - timeStamp);
+                 
                }
                if((animTime - timeStamp) > 0.78){
                   sprite.material.opacity = Math.cos(animTime - timeStamp);
+                  
                }
 
                // pulse away/towards center
@@ -408,7 +432,7 @@
             particleGroup.position.z = target.z;   
 
             scene.add( particleGroup );
-
+            
          }
          else{
             particlesOn = false;
@@ -450,35 +474,54 @@
 
       if ( intersects.length > 0 ) {
          if ( INTERSECTED != intersects[ 0 ].object ) {
-            if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+            if ( INTERSECTED ){
+               //INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex ); //on hover change emissive (uneffected by light) color
+               //INTERSECTED.material.wireframe = false; //on hover change to wireframe
+               gsap.to(INTERSECTED.material, 1, {opacity: 1 });
+
+            }
 
             INTERSECTED = intersects[ 0 ].object;
             INTERSECTED.material = INTERSECTED.material.clone(); //must clone the material into a new instance otherwise (since 1 material is shared across all brain regions) it would change the surface of all brain regions. Code inspired by https://discourse.threejs.org/t/manipulate-child-mesh-material-without-affecting-parent-object/20440/3
-            INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-            INTERSECTED.material.emissive.setHex( 0xf9d1fb );
+            //INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+            //INTERSECTED.material.emissive.setHex( 0xf9d1fb );
+            INTERSECTED.material.wireframeLinewidth = 10;
+            //INTERSECTED.material.wireframe = true;
+            gsap.to(INTERSECTED.material, 1, {opacity: 0.6 });
+
+           
             
 
             NEUROPROSTHETICS_CANVAS.addEventListener('click', function(){
                //only firing the event if the brain was clickled. I.e. not when clicked inside the canvas but outside the brain
                if(INTERSECTED){
                   //if any brain area was already clicked, then when the next area is clicked the old one should return to original color/texture
-                  if(previouslySelectedBrainArea){
-                     previouslySelectedBrainArea.material.emissive.setHex( INTERSECTED.currentHex );
+                  if(previouslySelectedBrainArea){   
+                     //previouslySelectedBrainArea.material.emissive.setHex( INTERSECTED.currentHex ); //on hover change emissive (uneffected by light) color
+                     //previouslySelectedBrainArea.material.wireframe = false; //on hover change to wireframe
+                     gsap.to(previouslySelectedBrainArea.material, 1, {opacity: 1 });
                      
+
 
                      previouslySelectedBrainArea.material.map = colorMap_bio;                 
                      previouslySelectedBrainArea.material.bumpMap = null;
                      previouslySelectedBrainArea.material.needsUpdate = true;
 
+                     
 
                   }
-                  //INTERSECTED.material.emissive.setHex( 0x0000FF );
+                  
                   
                   INTERSECTED.material.bumpMap = heightMap_tech;
                   INTERSECTED.material.bumpScale = 0.002;
                   INTERSECTED.material.map = colorMap_tech;
-               
-                  INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex ); //so that after clicking a brain part it will stop being highlighted
+                  
+                  
+                  
+               //so that after clicking a brain part it will stop being highlighted
+                  //INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex ); //on hover change emissive (uneffected by light) color
+                  //INTERSECTED.material.wireframe = false; //on hover change to wireframe
+                  gsap.to(INTERSECTED.material, 1, {opacity: 1 });
 
                   onBrainAreaClicked (INTERSECTED.name);
 
@@ -498,7 +541,9 @@
          }
 		} else {
 			if ( INTERSECTED ){
-            INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );            
+            //INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex ); //on hover change emissive (uneffected by light) color     
+            //INTERSECTED.material.wireframe = false; //on hover change to wireframe
+            gsap.to(INTERSECTED.material, 1, {opacity: 1 }); //on hover change opacity
             
          }
 			INTERSECTED = null;
