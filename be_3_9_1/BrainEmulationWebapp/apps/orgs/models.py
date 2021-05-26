@@ -42,9 +42,11 @@ class Org(models.Model):
 	website = models.CharField(blank = True, null = True, max_length=255)
 	team_size = models.IntegerField(null = True)
 	country_hq = CountryField(blank_label = '(select headquarters)')
-	all_locations = CountryField(blank_label = '(select office locations)', multiple=True)
-	
-	is_featured = models.BooleanField(default=False)
+	#all_locations = CountryField(blank_label = '(select office locations)', multiple=True)
+	#brain_region
+	#brodmann_area
+
+	#is_featured = models.BooleanField(default=False)
 	date_added = models.DateTimeField(auto_now_add=True)
 
 	class Meta:
