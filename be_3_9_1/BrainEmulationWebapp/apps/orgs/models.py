@@ -18,15 +18,13 @@ class Category(models.Model):
 
 
 class Org(models.Model):
-	
-
-	
+		
 	category = models.ForeignKey(Category, related_name='orgs', on_delete=models.CASCADE)
 	#brain_region = models.ForeignKey(BrainRegion, related_name='brainRegion', on_delete=models.CASCADE)
 
 	title = models.CharField(max_length=255)
 	slug = models.SlugField(max_length=255)
-	what_and_how= models.CharField(max_length=140)
+	what_and_how= models.CharField(max_length=140) #Building {what} for {whom} using {}
 	description = models.TextField(blank = True, null = True)
 
 	#concerned_with_brain_area = MultiSelectField(
